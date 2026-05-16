@@ -339,6 +339,7 @@ func decryptHandler(cmd *cobra.Command, args []string) {
 		if idx := strings.Index(displayEmail, "@"); idx > 5 {
 			displayEmail = displayEmail[:5] + "..." + displayEmail[idx:]
 		}
+
 		tui.OK("signed in as %s (%s storefront)", displayEmail, appStoreCountry)
 
 		live = tui.NewLive()
@@ -683,12 +684,15 @@ func runDecryptOnBundle(dev *device.Client, helperPath, bundleID, bundlePath, ve
 			if restoreMinOS != "" {
 				msg = append(msg, fmt.Sprintf("MinimumOSVersion to %s", restoreMinOS))
 			}
+
 			if len(restoreDeviceFamily) > 0 {
 				msg = append(msg, fmt.Sprintf("UIDeviceFamily to %v", restoreDeviceFamily))
 			}
+
 			live.OK("restored %s", strings.Join(msg, ", "))
 		}
 	}
+
 	cleanupDecrypt(dev, decryptNoCleanup, stagingRemote, outRemote)
 }
 

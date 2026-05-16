@@ -446,6 +446,7 @@ func cmpVer(a, b string) int {
 // RestoreOriginalPlistValues rewrites the main Info.plist (MinimumOSVersion and UIDeviceFamily) to their original values in the given IPA file.
 func RestoreOriginalPlistValues(ipaPath, originalMinOS string, originalDeviceFamily []int) error {
 	tmpPath := ipaPath + ".tmp"
+
 	r, err := zip.OpenReader(ipaPath)
 	if err != nil {
 		return fmt.Errorf("open %s: %w", ipaPath, err)
@@ -453,6 +454,7 @@ func RestoreOriginalPlistValues(ipaPath, originalMinOS string, originalDeviceFam
 	defer r.Close()
 
 	var infoFile *zip.File
+
 	for _, f := range r.File {
 		if isMainAppInfoPlist(f.Name) {
 			infoFile = f
@@ -461,29 +463,36 @@ func RestoreOriginalPlistValues(ipaPath, originalMinOS string, originalDeviceFam
 	}
 
 	var data []byte
+
 	if infoFile != nil {
 		rc, err := infoFile.Open()
 		if err != nil {
 			return err
 		}
+
 		originalData, err := io.ReadAll(rc)
 		rc.Close()
+
 		if err != nil {
 			return err
 		}
 
 		var m map[string]any
+
 		format, err := plist.Unmarshal(originalData, &m)
 		if err == nil {
 			dirty := false
+
 			if originalMinOS != "" {
 				m["MinimumOSVersion"] = originalMinOS
 				dirty = true
 			}
+
 			if len(originalDeviceFamily) > 0 {
 				m["UIDeviceFamily"] = toAnySlice(originalDeviceFamily)
 				dirty = true
 			}
+
 			if dirty {
 				data, err = plist.Marshal(m, format)
 				if err != nil {
@@ -505,14 +514,17 @@ func RestoreOriginalPlistValues(ipaPath, originalMinOS string, originalDeviceFam
 			if err := writeBytes(f, w, data); err != nil {
 				out.Close()
 				os.Remove(tmpPath)
+
 				return fmt.Errorf("rewrite %s: %w", f.Name, err)
 			}
+
 			continue
 		}
 
 		if err := copyEntry(f, w); err != nil {
 			out.Close()
 			os.Remove(tmpPath)
+
 			return fmt.Errorf("copy %s: %w", f.Name, err)
 		}
 	}
@@ -520,6 +532,7 @@ func RestoreOriginalPlistValues(ipaPath, originalMinOS string, originalDeviceFam
 	if err := w.Close(); err != nil {
 		out.Close()
 		os.Remove(tmpPath)
+
 		return fmt.Errorf("close zip: %w", err)
 	}
 
